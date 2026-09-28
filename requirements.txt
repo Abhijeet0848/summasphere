@@ -1,0 +1,9 @@
+# Extractive Text Summarizer Dependencies
+# Core engine and web app run on Python standard library with zero external dependencies required.
+# Optional dependencies for advanced NLP enhancements and WSGI/ASGI production servers:
+
+nltk>=3.8.1
+requests>=2.31.0
+pytest>=8.0.0
+gunicorn>=21.2.0
+uvicorn>=0.27.0
