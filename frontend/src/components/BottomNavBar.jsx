@@ -53,8 +53,8 @@ export default function BottomNavBar({
       style={{ bottom: 'max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.9rem))' }}
       aria-label="Bottom Navigation Bar"
     >
-      {/* Glossy Transparent Glassmorphic Pill */}
-      <div className="relative bg-gradient-to-b from-white/80 via-white/65 to-white/75 backdrop-blur-2xl backdrop-saturate-150 border border-white/70 rounded-full px-3 py-2 shadow-[0_14px_40px_rgba(15,23,42,0.16),inset_0_1px_1.5px_rgba(255,255,255,0.95)] ring-1 ring-slate-900/10 flex items-center justify-between">
+      {/* Ultra-Glossy Translucent Frosted Glass Pill */}
+      <div className="relative glass-dock-glossy rounded-full px-3 py-2 flex items-center justify-between">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -66,16 +66,16 @@ export default function BottomNavBar({
               title={item.tooltip}
               className={`group relative flex flex-col items-center justify-center flex-1 py-0.5 transition-all duration-200 cursor-pointer select-none active:scale-95 ${
                 isActive
-                  ? 'text-indigo-700'
-                  : 'text-slate-700 hover:text-slate-950'
+                  ? 'text-indigo-800 font-bold'
+                  : 'text-slate-800 hover:text-slate-950 font-semibold'
               }`}
             >
               {/* Glossy Icon Container */}
               <div
                 className={`relative flex items-center justify-center w-9 h-9 rounded-2xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-b from-indigo-500 to-indigo-700 text-white shadow-md shadow-indigo-600/35 border border-indigo-400/40 scale-105'
-                    : 'text-slate-700 group-hover:text-slate-950 group-hover:bg-white/60'
+                    ? 'glass-active-pill text-white scale-105'
+                    : 'text-slate-800 group-hover:text-slate-950 group-hover:bg-white/40'
                 }`}
               >
                 <Icon className="w-5 h-5 stroke-[2.2]" />
