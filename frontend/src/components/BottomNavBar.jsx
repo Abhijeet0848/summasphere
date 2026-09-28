@@ -91,10 +91,10 @@ export default function BottomNavBar({
 
               {/* Readable Label */}
               <span
-                className={`text-[11px] font-semibold tracking-tight mt-1 transition-colors ${
+                className={`text-[11px] tracking-tight mt-1 transition-colors ${
                   isActive
                     ? 'text-indigo-700 font-bold'
-                    : 'text-slate-700 group-hover:text-slate-950'
+                    : 'text-slate-900 font-bold group-hover:text-black'
                 }`}
               >
                 {item.label}
