@@ -256,9 +256,14 @@ export default function ComparisonSection({
                       <span>{copiedMethod === item.method ? 'Copied' : 'Copy'}</span>
                     </button>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal">
-                    {item.summary}
-                  </p>
+                  <div className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed font-normal">
+                    {(item.summary.includes('\n')
+                      ? item.summary.split(/\n+/).map(s => s.trim()).filter(Boolean)
+                      : (item.summary.match(/[^.!?।॥\n]+(?:[.!?।॥]+["'”’\)\]]*|$)/g) || [item.summary]).map(s => s.trim()).filter(Boolean)
+                    ).map((sent, sIdx) => (
+                      <p key={sIdx}>{sent}</p>
+                    ))}
+                  </div>
                 </div>
                 <div className="mt-3 pt-2.5 border-t border-slate-200 text-xs text-slate-600 flex justify-between font-mono font-medium">
                   <span>{item.summary_word_count} words</span>

@@ -75,7 +75,7 @@ class RankingService:
         # Strictly sort by original ID (1, 2, 3...)
         selected_in_order.sort(key=lambda x: x["id"])
 
-        # 4. Construct final extractive summary
-        summary = " ".join(item["text"] for item in selected_in_order)
+        # 4. Construct final extractive summary (each sentence on a new line)
+        summary = "\n".join(item["text"].strip() for item in selected_in_order)
 
         return summary, annotated_sentences

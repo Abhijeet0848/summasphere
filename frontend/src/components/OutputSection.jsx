@@ -8,16 +8,30 @@ export default function OutputSection({
 }) {
   const [copied, setCopied] = useState(false);
 
+  const formatSentenceLines = (text) => {
+    if (!text) return [];
+    if (text.includes('\n')) {
+      return text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+    }
+    // Fallback: split by punctuation (. ! ? । ॥) if single block text
+    return (text.match(/[^.!?।॥\n]+(?:[.!?।॥]+["'”’\)\]]*|$)/g) || [text])
+      .map(s => s.trim())
+      .filter(Boolean);
+  };
+
+  const sentenceLines = formatSentenceLines(summary);
+  const formattedSummaryText = sentenceLines.join('\n\n');
+
   const handleCopy = () => {
     if (!summary) return;
-    navigator.clipboard.writeText(summary);
+    navigator.clipboard.writeText(formattedSummaryText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
     if (!summary) return;
-    const blob = new Blob([summary], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([formattedSummaryText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -45,7 +59,7 @@ export default function OutputSection({
               </h2>
               {summary && (
                 <p className="text-[11px] text-slate-500 font-medium">
-                  {summaryWordCount} words &bull; {compressionPercent}% shorter
+                  {summaryWordCount} words &bull; {compressionPercent}% shorter &bull; {sentenceLines.length} {sentenceLines.length === 1 ? 'sentence' : 'sentences'}
                 </p>
               )}
             </div>
@@ -85,10 +99,14 @@ export default function OutputSection({
               </svg>
               <p className="text-xs font-medium text-slate-700">Generating summary...</p>
             </div>
-          ) : summary ? (
-            <p className="whitespace-pre-wrap text-slate-900 font-normal leading-relaxed text-xs sm:text-sm">
-              {summary}
-            </p>
+          ) : sentenceLines.length > 0 ? (
+            <div className="space-y-3">
+              {sentenceLines.map((sentence, index) => (
+                <p key={index} className="text-slate-900 font-normal leading-relaxed text-xs sm:text-sm">
+                  {sentence}
+                </p>
+              ))}
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-44 text-slate-500 text-center p-4">
               <span className="text-2xl mb-1.5 opacity-60">📑</span>
