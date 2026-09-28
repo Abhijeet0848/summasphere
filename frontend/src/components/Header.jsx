@@ -8,6 +8,7 @@ import {
   History,
   Target
 } from 'lucide-react';
+import logoImg from '../assets/logo.png';
 
 export default function Header({ currentView, setView, onOpenRouge, hasSummary }) {
   const navItems = [
@@ -31,7 +32,7 @@ export default function Header({ currentView, setView, onOpenRouge, hasSummary }
           >
             <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-xl overflow-hidden bg-white border border-slate-300 shadow-sm flex items-center justify-center p-0.5 transition-transform group-hover:scale-105">
               <img
-                src="/logo.png"
+                src={logoImg}
                 alt="SummaSphere"
                 className="w-full h-full object-contain rounded-lg"
               />
