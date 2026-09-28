@@ -59,13 +59,31 @@ export default function ComparisonSection({
 
         {showRefInput && (
           <div className="mt-4 pt-4 border-t border-slate-200 text-left animate-in fade-in duration-150">
-            <label className="block text-xs sm:text-sm font-semibold text-slate-800 mb-1">
-              Reference / Human Summary (Optional):
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs sm:text-sm font-semibold text-slate-800">
+                Reference / Human Summary (Optional):
+              </label>
+              <label className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2.5 py-0.5 rounded-lg cursor-pointer transition-all active:scale-95 shadow-2xs">
+                <span>📁</span>
+                <span>Upload .TXT / .MD</span>
+                <input
+                  type="file"
+                  accept=".txt,.md"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const text = await file.text();
+                      setReferenceSummary(text);
+                    }
+                  }}
+                  className="hidden"
+                />
+              </label>
+            </div>
             <textarea
               value={referenceSummary}
               onChange={(e) => setReferenceSummary(e.target.value)}
-              placeholder="Paste a human-written summary here to measure accuracy scores..."
+              placeholder="Paste or upload a human-written summary file here to measure accuracy scores..."
               className="w-full h-24 p-3 text-xs sm:text-sm font-normal bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-600 focus:bg-white resize-none text-slate-800 placeholder:text-slate-400"
             />
           </div>

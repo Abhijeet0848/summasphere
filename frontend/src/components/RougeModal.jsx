@@ -1,18 +1,117 @@
-import React, { useState } from 'react';
-import { evaluateRouge } from '../services/api';
+import React, { useState, useRef } from 'react';
+import { evaluateRouge, extractDocument } from '../services/api';
+import { Upload, FileText, CheckCircle2, Sparkles, X } from 'lucide-react';
+
+const BENCHMARK_TEST_CASES = [
+  {
+    id: 1,
+    name: 'AI in Healthcare (EN)',
+    candidate: "Hospitals use deep learning algorithms to detect diabetic retinopathy and lung diseases from medical scans. Clinical research teams are also employing neural networks to accelerate drug discovery pipelines.",
+    reference: "Artificial intelligence is transforming modern healthcare through advanced predictive models. Automated diagnostic tools assist radiologists and accelerate drug discovery pipelines."
+  },
+  {
+    id: 2,
+    name: 'Renewable Solar Grids (EN)',
+    candidate: "Renewable energy generation has expanded rapidly due to declining photovoltaic cell costs. Transitioning from fossil fuels to clean energy is essential to combating global climate change.",
+    reference: "Renewable energy generation has expanded rapidly due to declining photovoltaic cell costs. Transitioning from fossil fuels to clean energy is essential to combating global climate change."
+  },
+  {
+    id: 3,
+    name: 'Quantum Computing (EN)',
+    candidate: "Quantum computers utilize quantum mechanical phenomena like superposition and entanglement to compute. Unlike classical bits that are either zero or one, quantum qubits can exist in multiple states simultaneously.",
+    reference: "Quantum computers utilize quantum mechanical phenomena like superposition and entanglement to compute. Cryptographers are developing post-quantum cryptographic standards to safeguard internet security."
+  },
+  {
+    id: 4,
+    name: 'Global Economics & Inflation (EN)',
+    candidate: "Central banks utilize interest rate adjustments as their primary tool to manage persistent inflation. When inflation surges beyond statutory targets, monetary authorities raise baseline policy rates to cool demand.",
+    reference: "Central banks utilize interest rate adjustments as their primary tool to manage persistent inflation. Achieving a soft landing without triggering an economic recession is the principal goal of monetary policymakers."
+  },
+  {
+    id: 5,
+    name: 'James Webb Space Telescope (EN)',
+    candidate: "The James Webb Space Telescope observes the universe primarily in the infrared spectrum with unprecedented clarity. Webb orbits the Sun at the Second Lagrange Point, roughly one million miles from Earth.",
+    reference: "The James Webb Space Telescope observes the universe primarily in the infrared spectrum with unprecedented clarity. These high-resolution deep-space observations are reshaping our fundamental understanding of cosmic origin."
+  },
+  {
+    id: 6,
+    name: 'Indus Valley Civilization (EN)',
+    candidate: "The Indus Valley Civilization was a Bronze Age civilization known for sophisticated urban planning and drainage. The civilization declined around 1900 BCE likely due to tectonic shifts and changing monsoon weather patterns.",
+    reference: "The Indus Valley Civilization was a Bronze Age civilization known for sophisticated urban planning and drainage. Cities like Harappa and Mohenjo-daro featured grid-based street layouts and standardized brick construction."
+  },
+  {
+    id: 7,
+    name: 'ISRO Chandrayaan-3 (HI 🇮🇳)',
+    candidate: "भारतीय अंतरिक्ष अनुसंधान संगठन भारत की राष्ट्रीय अंतरिक्ष एजेंसी है जो अंतरिक्ष अभियानों का संचालन करती है। इस ऐतिहासिक अभियान ने भारत को चंद्रमा के दक्षिणी ध्रुव पर उतरने वाला दुनिया का पहला देश बना दिया।",
+    reference: "भारतीय अंतरिक्ष अनुसंधान संगठन भारत की राष्ट्रीय अंतरिक्ष एजेंसी है। इसरो ने चंद्रमा के दक्षिणी ध्रुव पर चंद्रयान-3 का सफल लैंडर उतारकर ऐतिहासिक उपलब्धि हासिल की।"
+  },
+  {
+    id: 8,
+    name: 'Digital India & UPI (HI 🇮🇳)',
+    candidate: "यूनिफाइड पेमेंट्स इंटरफेस यानी यूपीआई ने भारत में डिजिटल भुगतान प्रणाली में क्रांतिकारी बदलाव किया है। भारतीय राष्ट्रीय भुगतान निगम द्वारा संचालित यह प्रणाली अब अंतरराष्ट्रीय स्तर पर भी स्वीकार की जा रही है।",
+    reference: "यूनिफाइड पेमेंट्स इंटरफेस यानी यूपीआई ने भारत में डिजिटल भुगतान प्रणाली में क्रांतिकारी बदलाव किया है। डिजिटल वित्तीय समावेशन ने भारतीय अर्थव्यवस्था को अधिक पारदर्शी और सशक्त बनाया है।"
+  },
+  {
+    id: 9,
+    name: 'Cybersecurity & MFA (EN)',
+    candidate: "Cybersecurity defenses rely heavily on robust multi-factor authentication to protect sensitive digital infrastructure.",
+    reference: "Cybersecurity defenses rely heavily on robust multi-factor authentication to protect sensitive digital infrastructure."
+  },
+  {
+    id: 10,
+    name: 'Deep Learning & Attention (EN)',
+    candidate: "By capturing long-range semantic dependencies between words, attention mechanisms overcome recurrent neural network bottlenecks. Pre-trained language models fine-tuned on specialized domain corpora demonstrate outstanding contextual comprehension. Scaling laws demonstrate that increased model parameters and high-quality training datasets consistently boost inference accuracy.",
+    reference: "Deep neural networks represent the cornerstone of contemporary machine learning and natural language processing. Transformer architectures rely on multi-head self-attention mechanisms to process sequential text data in parallel. Scaling laws demonstrate that increased parameters and high-quality datasets consistently boost inference accuracy."
+  }
+];
 
 export default function RougeModal({ isOpen, onClose, candidateSummary }) {
   const [reference, setReference] = useState('');
   const [candidate, setCandidate] = useState(candidateSummary || '');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [extractingFile, setExtractingFile] = useState(null); // 'candidate' | 'reference'
   const [error, setError] = useState('');
+
+  const candidateFileRef = useRef(null);
+  const referenceFileRef = useRef(null);
 
   React.useEffect(() => {
     if (candidateSummary) {
       setCandidate(candidateSummary);
     }
   }, [candidateSummary]);
+
+  const handleFileUpload = async (file, target) => {
+    if (!file) return;
+    setError('');
+    setExtractingFile(target);
+
+    try {
+      if (file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+        const text = await file.text();
+        if (target === 'candidate') setCandidate(text);
+        if (target === 'reference') setReference(text);
+      } else {
+        const data = await extractDocument(file);
+        if (target === 'candidate') setCandidate(data.text);
+        if (target === 'reference') setReference(data.text);
+      }
+    } catch (err) {
+      setError(`Failed to read file: ${err.message || 'Unknown error'}`);
+    } finally {
+      setExtractingFile(null);
+      if (candidateFileRef.current) candidateFileRef.current.value = '';
+      if (referenceFileRef.current) referenceFileRef.current.value = '';
+    }
+  };
+
+  const handleSelectBenchmark = (tc) => {
+    setCandidate(tc.candidate);
+    setReference(tc.reference);
+    setResults(null);
+    setError('');
+  };
 
   const handleEvaluate = async () => {
     if (!candidate.trim() || !reference.trim()) {
@@ -35,16 +134,16 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
         {/* Header */}
-        <div className="p-3.5 sm:p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/70">
+        <div className="p-3.5 sm:p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/80">
           <div>
             <h3 className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
               <span>🎯</span>
-              <span>Summary Accuracy Check (ROUGE)</span>
+              <span>Accuracy Evaluation Studio (ROUGE & File Tests)</span>
             </h3>
             <p className="text-xs sm:text-sm font-normal text-slate-600">
-              Check how closely your summary matches a reference text.
+              Upload reference files or select pre-configured test cases to measure summarization accuracy.
             </p>
           </div>
           <button
@@ -63,28 +162,89 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs sm:text-sm font-semibold text-slate-800 mb-1">
-                Generated Summary:
-              </label>
+          {/* 10 Test Cases Quick-Pick Toolbar */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+              <span>10 Pre-loaded Accuracy Test Cases:</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar">
+              {BENCHMARK_TEST_CASES.map((tc) => (
+                <button
+                  key={tc.id}
+                  type="button"
+                  onClick={() => handleSelectBenchmark(tc)}
+                  className="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 rounded-lg transition-all cursor-pointer shadow-2xs active:scale-95"
+                >
+                  #{tc.id} {tc.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Two-Column Input with File Uploaders */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Generated / Candidate Summary */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Generated Summary:</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => candidateFileRef.current?.click()}
+                  disabled={extractingFile === 'candidate'}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-md transition-all cursor-pointer active:scale-95"
+                >
+                  <Upload className="w-3 h-3" />
+                  <span>{extractingFile === 'candidate' ? 'Reading...' : 'Upload File'}</span>
+                </button>
+                <input
+                  ref={candidateFileRef}
+                  type="file"
+                  accept=".txt,.md"
+                  onChange={(e) => handleFileUpload(e.target.files?.[0], 'candidate')}
+                  className="hidden"
+                />
+              </div>
               <textarea
                 value={candidate}
                 onChange={(e) => setCandidate(e.target.value)}
-                placeholder="Generated summary..."
-                className="w-full h-28 sm:h-36 p-3 text-xs sm:text-sm font-normal bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-600 focus:bg-white resize-none text-slate-800 placeholder:text-slate-400"
+                placeholder="Paste or upload generated summary..."
+                className="w-full h-28 sm:h-36 p-3 text-xs sm:text-sm font-normal bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-600 focus:bg-white resize-none text-slate-800 placeholder:text-slate-400"
               />
             </div>
 
-            <div>
-              <label className="block text-xs sm:text-sm font-semibold text-slate-800 mb-1">
-                Reference Summary:
-              </label>
+            {/* Reference Summary */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Reference Summary (Ground Truth):</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => referenceFileRef.current?.click()}
+                  disabled={extractingFile === 'reference'}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition-all cursor-pointer active:scale-95"
+                >
+                  <Upload className="w-3 h-3" />
+                  <span>{extractingFile === 'reference' ? 'Reading...' : 'Upload File'}</span>
+                </button>
+                <input
+                  ref={referenceFileRef}
+                  type="file"
+                  accept=".txt,.md"
+                  onChange={(e) => handleFileUpload(e.target.files?.[0], 'reference')}
+                  className="hidden"
+                />
+              </div>
               <textarea
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                placeholder="Paste reference text here..."
-                className="w-full h-28 sm:h-36 p-3 text-xs sm:text-sm font-normal bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-600 focus:bg-white resize-none text-slate-800 placeholder:text-slate-400"
+                placeholder="Paste or upload reference summary / ground truth..."
+                className="w-full h-28 sm:h-36 p-3 text-xs sm:text-sm font-normal bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-600 focus:bg-white resize-none text-slate-800 placeholder:text-slate-400"
               />
             </div>
           </div>
@@ -104,22 +264,22 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                <span>Checking Match...</span>
+                <span>Evaluating Accuracy...</span>
               </>
             ) : (
               <>
                 <span>🎯</span>
-                <span>Calculate Match Score</span>
+                <span>Evaluate Accuracy (ROUGE-1, ROUGE-2, ROUGE-L)</span>
               </>
             )}
           </button>
 
           {/* Results Display */}
           {results && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3 animate-in fade-in duration-150">
               <div className="flex justify-between items-center">
                 <h4 className="text-xs sm:text-sm font-semibold text-slate-800 uppercase tracking-wider">
-                  Academic Accuracy Evaluation (ROUGE Metrics):
+                  Academic Accuracy Evaluation Results:
                 </h4>
                 <span className="text-[11px] font-semibold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
                   Extractive Ground Truth Comparison
@@ -135,7 +295,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
                       {(results.rouge_1.f1 * 100).toFixed(1)}%
                     </div>
                     <p className="text-[11px] text-slate-600 font-normal mb-2">
-                      Measures vocabulary & content coverage overlap.
+                      Vocabulary & content coverage overlap.
                     </p>
                   </div>
                   <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 font-mono font-medium flex justify-between">
@@ -153,7 +313,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
                       {(results.rouge_2.f1 * 100).toFixed(1)}%
                     </div>
                     <p className="text-[11px] text-slate-600 font-normal mb-2">
-                      Measures 2-word phrase fluency and context preservation.
+                      2-word phrase fluency and context preservation.
                     </p>
                   </div>
                   <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 font-mono font-medium flex justify-between">
@@ -171,7 +331,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
                       {(results.rouge_l.f1 * 100).toFixed(1)}%
                     </div>
                     <p className="text-[11px] text-slate-600 font-normal mb-2">
-                      Measures structural word order without requiring consecutive match.
+                      Structural word sequence & sentence flow.
                     </p>
                   </div>
                   <div className="pt-2 border-t border-slate-100 text-xs text-slate-600 font-mono font-medium flex justify-between">
@@ -186,9 +346,9 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
               <div className="p-3 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 space-y-1">
                 <div className="font-semibold text-slate-800">Academic Metric Definitions:</div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
-                  <div><strong>Precision (P):</strong> Fraction of words in generated summary that appear in reference.</div>
-                  <div><strong>Recall (R):</strong> Fraction of reference words captured in generated summary.</div>
-                  <div><strong>F1-Score:</strong> Harmonic mean balancing Precision and Recall.</div>
+                  <div><strong>Precision (P):</strong> Fraction of summary words present in reference.</div>
+                  <div><strong>Recall (R):</strong> Fraction of reference words captured by summary.</div>
+                  <div><strong>F1-Score:</strong> Harmonic balance of Precision and Recall.</div>
                 </div>
               </div>
             </div>
