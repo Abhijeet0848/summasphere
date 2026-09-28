@@ -1,69 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { evaluateRouge, extractDocument } from '../services/api';
-import { Upload, FileText, CheckCircle2, Sparkles, X } from 'lucide-react';
-
-const BENCHMARK_TEST_CASES = [
-  {
-    id: 1,
-    name: 'AI in Healthcare (EN)',
-    candidate: "Hospitals use deep learning algorithms to detect diabetic retinopathy and lung diseases from medical scans. Clinical research teams are also employing neural networks to accelerate drug discovery pipelines.",
-    reference: "Artificial intelligence is transforming modern healthcare through advanced predictive models. Automated diagnostic tools assist radiologists and accelerate drug discovery pipelines."
-  },
-  {
-    id: 2,
-    name: 'Renewable Solar Grids (EN)',
-    candidate: "Renewable energy generation has expanded rapidly due to declining photovoltaic cell costs. Transitioning from fossil fuels to clean energy is essential to combating global climate change.",
-    reference: "Renewable energy generation has expanded rapidly due to declining photovoltaic cell costs. Transitioning from fossil fuels to clean energy is essential to combating global climate change."
-  },
-  {
-    id: 3,
-    name: 'Quantum Computing (EN)',
-    candidate: "Quantum computers utilize quantum mechanical phenomena like superposition and entanglement to compute. Unlike classical bits that are either zero or one, quantum qubits can exist in multiple states simultaneously.",
-    reference: "Quantum computers utilize quantum mechanical phenomena like superposition and entanglement to compute. Cryptographers are developing post-quantum cryptographic standards to safeguard internet security."
-  },
-  {
-    id: 4,
-    name: 'Global Economics & Inflation (EN)',
-    candidate: "Central banks utilize interest rate adjustments as their primary tool to manage persistent inflation. When inflation surges beyond statutory targets, monetary authorities raise baseline policy rates to cool demand.",
-    reference: "Central banks utilize interest rate adjustments as their primary tool to manage persistent inflation. Achieving a soft landing without triggering an economic recession is the principal goal of monetary policymakers."
-  },
-  {
-    id: 5,
-    name: 'James Webb Space Telescope (EN)',
-    candidate: "The James Webb Space Telescope observes the universe primarily in the infrared spectrum with unprecedented clarity. Webb orbits the Sun at the Second Lagrange Point, roughly one million miles from Earth.",
-    reference: "The James Webb Space Telescope observes the universe primarily in the infrared spectrum with unprecedented clarity. These high-resolution deep-space observations are reshaping our fundamental understanding of cosmic origin."
-  },
-  {
-    id: 6,
-    name: 'Indus Valley Civilization (EN)',
-    candidate: "The Indus Valley Civilization was a Bronze Age civilization known for sophisticated urban planning and drainage. The civilization declined around 1900 BCE likely due to tectonic shifts and changing monsoon weather patterns.",
-    reference: "The Indus Valley Civilization was a Bronze Age civilization known for sophisticated urban planning and drainage. Cities like Harappa and Mohenjo-daro featured grid-based street layouts and standardized brick construction."
-  },
-  {
-    id: 7,
-    name: 'ISRO Chandrayaan-3 (HI 🇮🇳)',
-    candidate: "भारतीय अंतरिक्ष अनुसंधान संगठन भारत की राष्ट्रीय अंतरिक्ष एजेंसी है जो अंतरिक्ष अभियानों का संचालन करती है। इस ऐतिहासिक अभियान ने भारत को चंद्रमा के दक्षिणी ध्रुव पर उतरने वाला दुनिया का पहला देश बना दिया।",
-    reference: "भारतीय अंतरिक्ष अनुसंधान संगठन भारत की राष्ट्रीय अंतरिक्ष एजेंसी है। इसरो ने चंद्रमा के दक्षिणी ध्रुव पर चंद्रयान-3 का सफल लैंडर उतारकर ऐतिहासिक उपलब्धि हासिल की।"
-  },
-  {
-    id: 8,
-    name: 'Digital India & UPI (HI 🇮🇳)',
-    candidate: "यूनिफाइड पेमेंट्स इंटरफेस यानी यूपीआई ने भारत में डिजिटल भुगतान प्रणाली में क्रांतिकारी बदलाव किया है। भारतीय राष्ट्रीय भुगतान निगम द्वारा संचालित यह प्रणाली अब अंतरराष्ट्रीय स्तर पर भी स्वीकार की जा रही है।",
-    reference: "यूनिफाइड पेमेंट्स इंटरफेस यानी यूपीआई ने भारत में डिजिटल भुगतान प्रणाली में क्रांतिकारी बदलाव किया है। डिजिटल वित्तीय समावेशन ने भारतीय अर्थव्यवस्था को अधिक पारदर्शी और सशक्त बनाया है।"
-  },
-  {
-    id: 9,
-    name: 'Cybersecurity & MFA (EN)',
-    candidate: "Cybersecurity defenses rely heavily on robust multi-factor authentication to protect sensitive digital infrastructure.",
-    reference: "Cybersecurity defenses rely heavily on robust multi-factor authentication to protect sensitive digital infrastructure."
-  },
-  {
-    id: 10,
-    name: 'Deep Learning & Attention (EN)',
-    candidate: "By capturing long-range semantic dependencies between words, attention mechanisms overcome recurrent neural network bottlenecks. Pre-trained language models fine-tuned on specialized domain corpora demonstrate outstanding contextual comprehension. Scaling laws demonstrate that increased model parameters and high-quality training datasets consistently boost inference accuracy.",
-    reference: "Deep neural networks represent the cornerstone of contemporary machine learning and natural language processing. Transformer architectures rely on multi-head self-attention mechanisms to process sequential text data in parallel. Scaling laws demonstrate that increased parameters and high-quality datasets consistently boost inference accuracy."
-  }
-];
+import { Upload, FileText, CheckCircle2 } from 'lucide-react';
 
 export default function RougeModal({ isOpen, onClose, candidateSummary }) {
   const [reference, setReference] = useState('');
@@ -106,16 +43,9 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
     }
   };
 
-  const handleSelectBenchmark = (tc) => {
-    setCandidate(tc.candidate);
-    setReference(tc.reference);
-    setResults(null);
-    setError('');
-  };
-
   const handleEvaluate = async () => {
     if (!candidate.trim() || !reference.trim()) {
-      setError('Please provide both your summary and the reference summary.');
+      setError('Please provide both your generated summary and the reference summary.');
       return;
     }
     setError('');
@@ -124,7 +54,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
       const data = await evaluateRouge({ candidate, reference });
       setResults(data);
     } catch (err) {
-      setError(err.message || 'Check failed');
+      setError(err.message || 'Evaluation failed');
     } finally {
       setLoading(false);
     }
@@ -134,16 +64,16 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
         {/* Header */}
         <div className="p-3.5 sm:p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/80">
           <div>
             <h3 className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
               <span>🎯</span>
-              <span>Accuracy Evaluation Studio (ROUGE & File Tests)</span>
+              <span>Accuracy Evaluation (ROUGE Metrics)</span>
             </h3>
             <p className="text-xs sm:text-sm font-normal text-slate-600">
-              Upload reference files or select pre-configured test cases to measure summarization accuracy.
+              Paste or upload your candidate summary and ground truth reference file to evaluate precision, recall, and F1 scores.
             </p>
           </div>
           <button
@@ -161,26 +91,6 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
               {error}
             </div>
           )}
-
-          {/* 10 Test Cases Quick-Pick Toolbar */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-              <span>10 Pre-loaded Accuracy Test Cases:</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto no-scrollbar">
-              {BENCHMARK_TEST_CASES.map((tc) => (
-                <button
-                  key={tc.id}
-                  type="button"
-                  onClick={() => handleSelectBenchmark(tc)}
-                  className="px-2.5 py-1 text-[11px] font-semibold bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-300 rounded-lg transition-all cursor-pointer shadow-2xs active:scale-95"
-                >
-                  #{tc.id} {tc.name}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Two-Column Input with File Uploaders */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -211,7 +121,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
               <textarea
                 value={candidate}
                 onChange={(e) => setCandidate(e.target.value)}
-                placeholder="Paste or upload generated summary..."
+                placeholder="Paste or upload generated summary text..."
                 className="w-full h-28 sm:h-36 p-3 text-xs sm:text-sm font-normal bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-600 focus:bg-white resize-none text-slate-800 placeholder:text-slate-400"
               />
             </div>
@@ -221,7 +131,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
               <div className="flex items-center justify-between">
                 <label className="text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Reference Summary (Ground Truth):</span>
+                  <span>Reference Summary:</span>
                 </label>
                 <button
                   type="button"
@@ -243,7 +153,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
               <textarea
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
-                placeholder="Paste or upload reference summary / ground truth..."
+                placeholder="Paste or upload ground truth reference text..."
                 className="w-full h-28 sm:h-36 p-3 text-xs sm:text-sm font-normal bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-600 focus:bg-white resize-none text-slate-800 placeholder:text-slate-400"
               />
             </div>
@@ -252,7 +162,7 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
           <button
             onClick={handleEvaluate}
             disabled={loading || !candidate.trim() || !reference.trim()}
-            className={`w-full py-3.5 px-5 rounded-2xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 select-none cursor-pointer tracking-wide ${
+            className={`w-full py-3 px-5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 select-none cursor-pointer tracking-wide ${
               !candidate.trim() || !reference.trim() || loading
                 ? 'btn-3d-disabled'
                 : 'btn-3d-primary text-white'
@@ -279,10 +189,10 @@ export default function RougeModal({ isOpen, onClose, candidateSummary }) {
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3 animate-in fade-in duration-150">
               <div className="flex justify-between items-center">
                 <h4 className="text-xs sm:text-sm font-semibold text-slate-800 uppercase tracking-wider">
-                  Academic Accuracy Evaluation Results:
+                  Accuracy Evaluation Results:
                 </h4>
                 <span className="text-[11px] font-semibold text-blue-800 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-                  Extractive Ground Truth Comparison
+                  ROUGE Metric Output
                 </span>
               </div>
 
