@@ -8,7 +8,7 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|logo.png|favicon.ico|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
