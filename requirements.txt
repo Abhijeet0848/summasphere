@@ -1,9 +1,9 @@
-# Extractive Text Summarizer Dependencies
-# Core engine and web app run on Python standard library with zero external dependencies required.
-# Optional dependencies for advanced NLP enhancements and WSGI/ASGI production servers:
-
+# Python Dependencies for Intelligent Extractive Text Summarization System
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+scikit-learn>=1.3.0
 nltk>=3.8.1
 requests>=2.31.0
 pytest>=8.0.0
-gunicorn>=21.2.0
-uvicorn>=0.27.0
+python-multipart>=0.0.6

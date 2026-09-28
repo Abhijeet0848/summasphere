@@ -8,7 +8,10 @@ import sqlite3
 import os
 from typing import List, Dict, Any, Optional
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "summarizer.db")
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    DB_PATH = "/tmp/summarizer.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "summarizer.db")
 
 
 def get_connection():
@@ -19,23 +22,27 @@ def get_connection():
 
 def init_db():
     """Initializes the SQLite schema with all required history fields."""
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS summarization_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                original_text TEXT NOT NULL,
-                summary TEXT NOT NULL,
-                method TEXT NOT NULL,
-                num_selected_sentences INTEGER NOT NULL,
-                original_word_count INTEGER NOT NULL,
-                summary_word_count INTEGER NOT NULL,
-                compression_ratio REAL NOT NULL,
-                processing_time_ms REAL NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.commit()
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS summarization_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    original_text TEXT NOT NULL,
+                    summary TEXT NOT NULL,
+                    method TEXT NOT NULL,
+                    num_selected_sentences INTEGER NOT NULL,
+                    original_word_count INTEGER NOT NULL,
+                    summary_word_count INTEGER NOT NULL,
+                    compression_ratio REAL NOT NULL,
+                    processing_time_ms REAL NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.commit()
+    except Exception as e:
+        # Graceful fallback if filesystem is read-only
+        print(f"Warning: SQLite init failed ({e})")
 
 
 def save_history(
